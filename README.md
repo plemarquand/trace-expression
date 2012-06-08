@@ -18,4 +18,4 @@ var y : Number = m * x + b;
 
 ## Installation
 
-Copy trace-expression.swf from /bin in to [path-to-fdt]/FDT/swfPlugins. Then go in to FDT and open Preferences > FDT > Swf Plugins and enable trace-expression from the list.
+Copy trace-expression.swf from /bin in to ~Library/ApplicationSupport/FDT/swfPlugins. If the folder doesn't exist, create it and copy trace-expression.swf in to it. In Preferences > FDT > Swf Plugins trace-expression should be enabled in the list. You can toggle it's avaliability from here.

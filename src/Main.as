@@ -11,7 +11,7 @@ package
 	/**
 	 * Main class for trace-expression
 	 */
-	[FdtSwfPlugin(name="DebugEquation", pluginType="action", toolTip="Inspect an expression in a trace statement.")]
+	[FdtSwfPlugin(name="trace-expression", pluginType="action", toolTip="Inspect an expression in a trace statement.")]
 	public class Main extends Sprite implements ISwfActionPlugin
 	{
 		[Embed(source="../assets/quotes.png", mimeType="application/octet-stream")]
