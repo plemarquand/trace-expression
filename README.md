@@ -1,7 +1,7 @@
 trace-expression
 ================
 
-An FDT swf-bridge plugin that takes a line of ActionScript code and creates a trace statement that outputs the expanded form of the expression.
+An swf-bridge plugin for FDT 5.5 that takes a line of ActionScript code and creates a trace statement that outputs the expanded form of the expression.
 
 This is best illustrated with an example. Take the following expression, which computes the slope of a line:
 
@@ -18,4 +18,8 @@ var y : Number = m * x + b;
 
 ## Installation
 
-Copy trace-expression.swf from /bin in to ~Library/ApplicationSupport/FDT/swfPlugins. If the folder doesn't exist, create it and copy trace-expression.swf in to it. In Preferences > FDT > Swf Plugins trace-expression should be enabled in the list. You can toggle it's avaliability from here.
+Copy trace-expression.swf from /bin in to ~Library/ApplicationSupport/FDT/swfPlugins on Mac, or . If the folder doesn't exist, create it and copy trace-expression.swf in to it. In Preferences > FDT > Swf Plugins trace-expression should be enabled in the list. You can toggle it's avaliability from here.
+
+## TODOs
+
+The formatting of the trace can be inconsistent, and while it will output valid code it sometimes looks a bit claustrophobic.

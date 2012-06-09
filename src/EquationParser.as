@@ -9,6 +9,8 @@ package
 		private static const METHOD_IDENTIFIER : String = "@";
 		private static const ARR_OPEN_BRACKET : String = "[";
 		private static const ARR_CLOSE_BRACKET : String = "]";
+		private static const OBJ_OPEN_BRACKET : String = "{";
+		private static const OBJ_CLOSE_BRACKET : String = "}";
 		
 		public var isReturnStatement : Boolean = false;
 
@@ -33,7 +35,7 @@ package
 				// filter out the empty strings and then build several trace statements.
 				lines.filter( function(line : String, ...args) : Boolean
 				{
-					return line.replace(/^\s+|\s+$/g, '').length > 0;
+					return line.replace( /^\s+|\s+$/g, '' ).length > 0;
 				} ).forEach( function(line : String, index : int, arr : Array) : void
 				{
 					result += parse( line ) + ((index != arr.length - 1) ? ('\n') : (''));
@@ -43,7 +45,7 @@ package
 
 			// trim out the left hand side of the expression
 			var leftHand : Object = /var.+?=/g.exec( input );
-			isReturnStatement = !leftHand && ( ( leftHand = /\s*return/g.exec( input ) ) != null );
+			isReturnStatement = ! leftHand && ( ( leftHand = /\s*return/g.exec( input ) ) != null );
 			if (leftHand)
 			{
 				input = input.substr( input.indexOf( leftHand[0] ) + leftHand[0]['length'] );
@@ -60,6 +62,7 @@ package
 			var stringOpen : Boolean = false;
 			var methodOpen : Boolean = false;
 			var arrayCounter : int = 0;
+			var objCounter : int = 0;
 			var len : int = split.length;
 			for (var i : int = 0; i < len; i++)
 			{
@@ -80,6 +83,21 @@ package
 				{
 					result += token;
 				}
+				// do the same with object literals as we do with array indicies.
+				else if (token == OBJ_CLOSE_BRACKET)
+				{
+					objCounter--;
+					result += token;
+				}
+				else if ( token == OBJ_OPEN_BRACKET)
+				{
+					objCounter++;
+					result += token;
+				}
+				else if (objCounter > 0)
+				{
+					result += token;
+				}
 				else if (token == ' ')
 				{
 					continue;
@@ -89,7 +107,7 @@ package
 					methodOpen = true;
 					if (! stringOpen)
 					{
-						result += (result.length > 0 && result.substr( result.length - 2 ) != ", ") ? (", \"") : ("\"");
+						result += (result.length > 0 && result.substr( result.length - 2 ) != ', ') ? (', "') : ('"');
 					}
 				}
 				else if (methodOpen)
@@ -98,7 +116,18 @@ package
 
 					if (token == '(')
 					{
-						result += "\", ";
+						var lookaheadResult : Object = /\s*?\)/g.exec( annotated.substr( i + 1 ) );
+
+						// if this is an empty method, dont open the string.
+						if (lookaheadResult && lookaheadResult['index'] == 0)
+						{
+							result += ')"';
+							i += lookaheadResult[0]['length'];
+						}
+						else
+						{
+							result += '", ';
+						}
 						stringOpen = false;
 						methodOpen = false;
 					}
@@ -110,7 +139,7 @@ package
 					{
 						if (! stringOpen)
 						{
-							result += (result.length > 0) ? (", \"") : ("\"");
+							result += (result.length > 0) ? (', "') : ('"');
 						}
 
 						result += token;
@@ -119,6 +148,7 @@ package
 						{
 							result += " ";
 						}
+						
 						stringOpen = true;
 					}
 					else
@@ -126,9 +156,10 @@ package
 						// closes out the string
 						if (stringOpen)
 						{
-							result += "\", ";
+							result += '", ';
 							stringOpen = false;
 						}
+						
 						result += token;
 					}
 				}
@@ -136,7 +167,7 @@ package
 
 			if (stringOpen)
 			{
-				result += "\"";
+				result += '"';
 			}
 
 			return "trace(" + format( result ) + ");";
