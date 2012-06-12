@@ -38,18 +38,11 @@ package
 			_output = "";
 		}
 
-		private function space(depth : int) : String
-		{
-			return "                                                            ".substring( 0, depth );
-		}
-
 		override protected function enterNode(depth : int, parent : IFdtAstNode, name : String, index : int, node : IFdtAstNode) : Boolean
 		{
 			if (node && isNodeOnCurrentLine( node ))
 			{
 				var expression : String = _context.currentLine.substr( node.offset - _context.currentLineOffset, node.length );
-
-				trace( ">" + space( depth ), expression, "->", node, depth, parent, name, index );
 
 				if (node is FdtAstArguments)
 				{
@@ -90,11 +83,6 @@ package
 				{
 					_output += parseChunk( expression );
 				}
-
-				if (_output.length)
-				{
-					trace( "O" + space( depth ), _output );
-				}
 			}
 
 			if ( ! _createdEdit && node && node.offset >= _context.selectionOffset + _context.currentLine.length)
@@ -111,9 +99,6 @@ package
 		{
 			if (node && isNodeOnCurrentLine( node ))
 			{
-				var expression : String = _context.currentLine.substr( node.offset - _context.currentLineOffset, node.length );
-				trace( "<" + space( depth ), expression, "->", node );
-
 				if (node is FdtAstArrayAccess )
 				{
 					_arrayAccessorCount--;
@@ -156,13 +141,7 @@ package
 			if (isTokenOnCurrentLine( tokenOffset ))
 			{
 				var token : String = _context.currentLine.substr( tokenOffset - _context.currentLineOffset, 1 );
-
 				_output += parseChunk( token );
-
-				if (_output.length)
-				{
-					trace( "T" + space( depth ), _output );
-				}
 			}
 		}
 

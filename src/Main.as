@@ -2,12 +2,13 @@ package
 {
 
 	import fdt.FdtTextEdit;
+	import fdt.ast.IFdtAstNode;
 	import swf.bridge.FdtEditorContext;
 	import swf.bridge.IFdtActionBridge;
 	import swf.plugin.ISwfActionPlugin;
 	import flash.display.Sprite;
 	import flash.utils.Dictionary;
-	
+
 	/**
 	 * Main class for trace-expression
 	 */
@@ -16,7 +17,11 @@ package
 	{
 		[Embed(source="../assets/quotes.png", mimeType="application/octet-stream")]
 		private var _icon : Class;
+		
 		private var _bridge : IFdtActionBridge;
+		private var _context : FdtEditorContext;
+		private var _ec : FdtEditorContext;
+		private var _visitor : ExpressionVisitor;
 
 		public function Main()
 		{
@@ -36,28 +41,41 @@ package
 
 		private function onSelection(id : String, ec : FdtEditorContext) : void
 		{
-			var selectedText : String = ec.currentLine;
+			_ec = ec;
+			_bridge.editor.getCurrentContext().sendTo( this, useContext );
+		}
 
-			var parser : EquationParser = new EquationParser();
-			var result : String = parser.parse( selectedText );
+		private function useContext(context : FdtEditorContext) : void
+		{
+			_context = context;
+			_bridge.model.fileAst( context.currentFile ).sendTo( this, useAst );
+		}
 
+		private function useAst(root : IFdtAstNode) : void
+		{
+			_visitor = new ExpressionVisitor( _context, onParsed );
+			_visitor.visit( root );
+		}
+
+		private function onParsed(result : String) : void
+		{
 			var textEdits : Vector.<FdtTextEdit> = new Vector.<FdtTextEdit>();
-			var whitespaceResult : Object = /^[\s\t\n]+/.exec( ec.currentLine );
+			var whitespaceResult : Object = /^[\s\t\n]+/.exec( _ec.currentLine );
 			var whitespace : String = (whitespaceResult) ? (whitespaceResult[0]) : '';
 			var toInput : String = whitespace + result.split( "\n" ).join( "\n" + whitespace );
 
 			// traces evaluating return statements should be placed in front of the execution of the line
 			// otherwise we'll never see the trace!
-			if (parser.isReturnStatement)
+			if (_visitor.isReturnStatement)
 			{
-				textEdits.push( new FdtTextEdit( ec.currentLineOffset, 0, toInput + "\n" ) );
+				textEdits.push( new FdtTextEdit( _ec.currentLineOffset, 0, toInput + "\n" ) );
 			}
 			else
 			{
-				textEdits.push( new FdtTextEdit( ec.currentLineOffset + ec.currentLine.length, 0, "\n" + toInput ) );
+				textEdits.push( new FdtTextEdit( _ec.currentLineOffset + _ec.currentLine.length, 0, "\n" + toInput ) );
 			}
 
-			_bridge.model.fileDocumentModify( ec.currentFile, textEdits ).sendTo( this, null );
+			_bridge.model.fileDocumentModify( _ec.currentFile, textEdits ).sendTo( this, null );
 		}
 
 		public function callEntryAction(entryId : String) : void
