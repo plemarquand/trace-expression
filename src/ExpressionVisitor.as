@@ -16,7 +16,7 @@ package
 	 */
 	public class ExpressionVisitor extends FdtAstVisitor
 	{
-		private static const RESERVED_OPERANDS : Array = [ '+', '-', '*', '/', ';', '>', '<', '~', '!', '%', '&&', '||', ':', ';', '?', '=', '==', '!=', '||=' ];
+		private static const RESERVED_OPERANDS : Array = [ '+', '-', '*', '/', ';', '>', '<', '~', '!', '%', '&&', '||', ':', ';', '?', '=', '==', '!=', '||=', '+=', '-=', '/=', '*=' ];
 		private static const PARENTHESES : Array = [ '(', ')' ];
 		private var _context : FdtEditorContext;
 		private var _output : String;
@@ -53,7 +53,7 @@ package
 					}
 					else
 					{
-						_ignoreParentheses = true;
+						_ignoreParentheses = true; 
 					}
 				}
 				else if (node is FdtAstArrayAccess )
@@ -84,14 +84,19 @@ package
 					_output += parseChunk( expression );
 				}
 			}
-
-			if ( ! _createdEdit && node && node.offset >= _context.selectionOffset + _context.currentLine.length)
+			else if(node)
 			{
-				_createdEdit = true;
-				_resultCallback( wrapInTrace( _output ) );
-				return false;
-			}
+				if ( ! _createdEdit && node && node.offset >= _context.selectionOffset + _context.currentLine.length)
+				{
+					_createdEdit = true;
+					_resultCallback( wrapInTrace( _output ) );
+					return false;
+				}
 
+				// stop parsing nodes that dont contain the expression we're parsing.
+				return nodeContainsCurrentLine( node );
+			}
+			
 			return true;
 		}
 
@@ -193,6 +198,13 @@ package
 			var lineStart : int = _context.currentLineOffset;
 			var lineEnd : int = _context.currentLineOffset + _context.currentLine.length;
 			return tokenOffset >= lineStart && tokenOffset <= lineEnd;
+		}
+
+		private function nodeContainsCurrentLine(node : IFdtAstNode) : Boolean
+		{
+			var lineStart : int = _context.currentLineOffset;
+			var lineEnd : int = _context.currentLineOffset + _context.currentLine.length;
+			return node.offset <= lineStart && node.offset + node.length >= lineEnd;
 		}
 
 		/**

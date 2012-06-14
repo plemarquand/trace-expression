@@ -36,29 +36,34 @@ package
 
 		public function createProposals(ec : FdtEditorContext) : void
 		{
+			trace("Main.createProposals(",ec,")");
 			_bridge.offerProposal( "traceExpression", "traceExpressionIcon", "Create expression trace", "Creates a trace for the expression on this line.", onSelection );
 		}
 
 		private function onSelection(id : String, ec : FdtEditorContext) : void
 		{
+			trace("Main.onSelection(",id, ec,")");
 			_ec = ec;
 			_bridge.editor.getCurrentContext().sendTo( this, useContext );
 		}
 
 		private function useContext(context : FdtEditorContext) : void
 		{
+			trace("Main.useContext(",context, context.currentFile,")");
 			_context = context;
 			_bridge.model.fileAst( context.currentFile ).sendTo( this, useAst );
 		}
 
 		private function useAst(root : IFdtAstNode) : void
 		{
+			trace("Main.useAst(",root,")");
 			_visitor = new ExpressionVisitor( _context, onParsed );
 			_visitor.visit( root );
 		}
 
 		private function onParsed(result : String) : void
 		{
+			trace("Main.onParsed(",result,")");
 			var textEdits : Vector.<FdtTextEdit> = new Vector.<FdtTextEdit>();
 			var whitespaceResult : Object = /^[\s\t\n]+/.exec( _ec.currentLine );
 			var whitespace : String = (whitespaceResult) ? (whitespaceResult[0]) : '';
