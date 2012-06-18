@@ -2,6 +2,7 @@ package
 {
 
 	import asunit.framework.TestCase;
+	import flash.display.MovieClip;
 	import flash.display.Sprite;
 	import flash.geom.Point;
 
@@ -175,6 +176,35 @@ package
 			var obj : Sprite;
 			obj.addChildAt( new Sprite(), 1 );
 			trace(obj.addChildAt(new Sprite(),1));
+		}
+		
+		public function testAsCast() : void
+		{
+			var clip : MovieClip;
+			(clip as Sprite);
+			trace("(",clip as Sprite,")");
+		}
+		
+		public function testIsComparison() : void
+		{
+			var clip : MovieClip;
+			(clip is Sprite);
+			trace("(",clip is Sprite,")");
+		}
+
+		public function testIfStatement() : void
+		{
+			var x : Number;
+			if (x is int)
+			{ }
+			trace("if(",x is int,")");
+		}
+		
+		public function testIfWithElseStatement() : void
+		{
+			var x : Number;
+			if (x is int) { } else { }
+			trace("if(",x is int,")");
 		}
 		
 		private function method(...args) : void 

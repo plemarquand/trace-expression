@@ -4,7 +4,10 @@ package
 	import fdt.ast.FdtAstAllocation;
 	import fdt.ast.FdtAstArguments;
 	import fdt.ast.FdtAstArrayAccess;
+	import fdt.ast.FdtAstBlock;
+	import fdt.ast.FdtAstIf;
 	import fdt.ast.FdtAstObjectInitializer;
+	import fdt.ast.FdtAstRelational;
 	import fdt.ast.FdtAstReturn;
 	import fdt.ast.FdtAstString;
 	import fdt.ast.IFdtAstNode;
@@ -16,7 +19,7 @@ package
 	 */
 	public class ExpressionVisitor extends FdtAstVisitor
 	{
-		private static const RESERVED_OPERANDS : Array = [ '+', '-', '*', '/', ';', '>', '<', '~', '!', '%', '&&', '||', ':', ';', '?', '=', '==', '!=', '||=', '+=', '-=', '/=', '*=' ];
+		private static const RESERVED_OPERANDS : Array = [ '+', '-', '*', '/', ';', '>', '<', '~', '!', '%', '&&', '||', ':', ';', '?', '=', '==', '!=', '||=', '+=', '-=', '/=', '*=', 'if', 'else if', 'else' ];
 		private static const PARENTHESES : Array = [ '(', ')' ];
 		private var _context : FdtEditorContext;
 		private var _output : String;
@@ -28,6 +31,7 @@ package
 		private var _argumentCount : int = 0;
 		private var _isReturnStatement : Boolean;
 		private var _ignoreParentheses : Boolean;
+		private var _isParsingIfBlock : Boolean;
 
 		public function ExpressionVisitor(context : FdtEditorContext, resultCallback : Function)
 		{
@@ -79,6 +83,18 @@ package
 						_output += "new ";
 					}
 				}
+				else if ( node is FdtAstIf )
+				{
+					_output += parseChunk( "if" );
+				}
+				else if (node is FdtAstBlock && parent is FdtAstIf)
+				{
+					_isParsingIfBlock = true;
+				}
+				else if (node is FdtAstString && parent is FdtAstRelational && name == "op")
+				{
+					_output += parseChunk( " " + expression + " " );
+				}
 				else if (node is FdtAstString)
 				{
 					_output += parseChunk( expression );
@@ -89,7 +105,7 @@ package
 				if ( ! _createdEdit && node && node.offset >= _context.selectionOffset + _context.currentLine.length)
 				{
 					_createdEdit = true;
-					_resultCallback( wrapInTrace( _output ) );
+					dispatchResult();
 					return false;
 				}
 
@@ -116,6 +132,10 @@ package
 				{
 					_allocationCount--;
 				}
+				else if (node is FdtAstBlock && parent is FdtAstIf)
+				{
+					_isParsingIfBlock = false;
+				}
 				else if (node is FdtAstArguments)
 				{
 					var args : FdtAstArguments = node as FdtAstArguments;
@@ -131,9 +151,19 @@ package
 
 				if (name == "start" && ! _createdEdit)
 				{
-					_resultCallback( wrapInTrace( _output ) );
+					dispatchResult();
 				}
 			}
+		}
+		
+		private function dispatchResult() : void
+		{
+			if (_stringOpen)
+			{
+				_stringOpen = false;
+				_output += '"';
+			}
+			_resultCallback( wrapInTrace( _output ) );
 		}
 
 		private function wrapInTrace(str : String) : String
@@ -143,10 +173,11 @@ package
 
 		override protected function visitToken(depth : int, parent : IFdtAstNode, name : String, index : int, tokenOffset : int) : void
 		{
-			if (isTokenOnCurrentLine( tokenOffset ))
+			if (isTokenOnCurrentLine( tokenOffset ) && !_isParsingIfBlock && name != "elseToken")
 			{
 				var token : String = _context.currentLine.substr( tokenOffset - _context.currentLineOffset, 1 );
 				_output += parseChunk( token );
+				
 			}
 		}
 
@@ -163,7 +194,9 @@ package
 			{
 				if (token == ';')
 				{
-					return (_stringOpen) ? ('"') : ('');
+					var output : String = (_stringOpen) ? ('"') : ('');
+					_stringOpen = false;
+					return output;
 				}
 
 				if (! _stringOpen)
